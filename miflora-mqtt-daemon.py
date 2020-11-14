@@ -52,7 +52,7 @@ print(Style.RESET_ALL)
 sd_notifier = sdnotify.SystemdNotifier()
 
 # Logging function
-def print_line(text, error = False, warning=False, sd_notify=False, console=True, syslog=True):
+def print_line(text, error = False, warning=False, sd_notify=False, console=True, log=True):
     timestamp = strftime('%Y-%m-%d %H:%M:%S', localtime())
     if console:
         if error:
@@ -62,17 +62,17 @@ def print_line(text, error = False, warning=False, sd_notify=False, console=True
         else:
             print(Fore.GREEN + '[{}] '.format(timestamp) + Style.RESET_ALL + '{}'.format(text) + Style.RESET_ALL)
 
-    timestamp_sd = strftime('%b %d %H:%M:%S', localtime())
-    if sd_notify:
-        sd_notifier.notify('STATUS={} - {}.'.format(timestamp_sd, unidecode(text)))
-        
-    if syslog:
+    if log:
         if error:
             syslog(LOG_ERR, text)
-        if warning:
+        elif warning:
             syslog(LOG_WARN, text)
         else:
             syslog(LOG_INFO, text)
+
+    timestamp_sd = strftime('%b %d %H:%M:%S', localtime())
+    if sd_notify:
+        sd_notifier.notify('STATUS={} - {}.'.format(timestamp_sd, unidecode(text)))
 
 # Identifier cleanup
 def clean_identifier(name):
