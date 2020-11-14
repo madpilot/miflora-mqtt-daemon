@@ -15,6 +15,7 @@ from unidecode import unidecode
 from miflora.miflora_poller import MiFloraPoller, MI_BATTERY, MI_CONDUCTIVITY, MI_LIGHT, MI_MOISTURE, MI_TEMPERATURE
 from btlewrap import BluepyBackend, GatttoolBackend, BluetoothBackendException
 from bluepy.btle import BTLEException
+from syslog import syslog, LOG_INFO, LOG_WARNING, LOG_ERR
 import paho.mqtt.client as mqtt
 import sdnotify
 from signal import signal, SIGPIPE, SIG_DFL
@@ -51,7 +52,7 @@ print(Style.RESET_ALL)
 sd_notifier = sdnotify.SystemdNotifier()
 
 # Logging function
-def print_line(text, error = False, warning=False, sd_notify=False, console=True):
+def print_line(text, error = False, warning=False, sd_notify=False, console=True, syslog=True):
     timestamp = strftime('%Y-%m-%d %H:%M:%S', localtime())
     if console:
         if error:
@@ -60,9 +61,18 @@ def print_line(text, error = False, warning=False, sd_notify=False, console=True
             print(Fore.YELLOW + '[{}] '.format(timestamp) + Style.RESET_ALL + '{}'.format(text) + Style.RESET_ALL)
         else:
             print(Fore.GREEN + '[{}] '.format(timestamp) + Style.RESET_ALL + '{}'.format(text) + Style.RESET_ALL)
+
     timestamp_sd = strftime('%b %d %H:%M:%S', localtime())
     if sd_notify:
         sd_notifier.notify('STATUS={} - {}.'.format(timestamp_sd, unidecode(text)))
+        
+    if syslog:
+        if error:
+            syslog(LOG_ERR, text)
+        if warning:
+            syslog(LOG_WARN, text)
+        else:
+            syslog(LOG_INFO, text)
 
 # Identifier cleanup
 def clean_identifier(name):
